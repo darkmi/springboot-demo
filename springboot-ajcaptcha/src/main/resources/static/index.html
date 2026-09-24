@@ -79,8 +79,8 @@
     line-height: 1.8;
   }
 
-  /* 验证码弹出层宿主：pop 模式下组件渲染于此，默认隐藏 */
-  #sliderPanel, #pointPanel { display: none; }
+  /* 验证码弹出层宿主：pop 模式下插件自行控制内部 .mask 遮罩的显隐，
+     宿主 div 本身不能加 display:none，否则弹层永远无法显示 */
 
   #result {
     margin-top: 14px;
