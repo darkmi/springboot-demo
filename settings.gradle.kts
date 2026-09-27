@@ -1,3 +1,3 @@
 rootProject.name = "springboot-demo"
 
-include("springboot-ajcaptcha", "springboot-hutool-captcha")
+include("springboot-ajcaptcha", "springboot-hutool-captcha", "springboot-shell")
