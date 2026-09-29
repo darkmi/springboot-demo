@@ -1,9 +1,9 @@
-package com.darkmi.springboot.ajcaptchaplus.config;
+package com.darkmi.springboot.captchaplus.config;
 
 import com.xingyuv.captcha.properties.AjCaptchaProperties;
 import com.xingyuv.captcha.service.CaptchaCacheService;
 import com.xingyuv.captcha.service.impl.CaptchaServiceFactory;
-import com.darkmi.springboot.ajcaptchaplus.framework.captcha.core.RedisCaptchaServiceImpl;
+import com.darkmi.springboot.captchaplus.framework.captcha.core.RedisCaptchaServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;

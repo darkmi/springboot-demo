@@ -1,4 +1,4 @@
-package com.darkmi.springboot.ajcaptchaplus.framework.captcha.core;
+package com.darkmi.springboot.captchaplus.framework.captcha.core;
 
 import com.xingyuv.captcha.service.CaptchaCacheService;
 import org.springframework.data.redis.core.StringRedisTemplate;

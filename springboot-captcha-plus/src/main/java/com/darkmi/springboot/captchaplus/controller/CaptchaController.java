@@ -1,4 +1,4 @@
-package com.darkmi.springboot.ajcaptchaplus.controller;
+package com.darkmi.springboot.captchaplus.controller;
 
 import com.xingyuv.captcha.model.common.ResponseModel;
 import com.xingyuv.captcha.model.vo.CaptchaVO;

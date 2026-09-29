@@ -1,13 +1,13 @@
-package com.darkmi.springboot.ajcaptchaplus;
+package com.darkmi.springboot.captchaplus;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpringbootAjcaptchaPlusApplication {
+public class SpringbootCaptchaPlusApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringbootAjcaptchaPlusApplication.class, args);
+        SpringApplication.run(SpringbootCaptchaPlusApplication.class, args);
     }
 
 }

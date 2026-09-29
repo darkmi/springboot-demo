@@ -6,7 +6,7 @@ plugins {
 
 group = "com.darkmi"
 version = "0.0.1-SNAPSHOT"
-description = "springboot-ajcaptcha-plus"
+description = "springboot-captcha-plus"
 
 java {
 	toolchain {
