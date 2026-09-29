@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - 短信验证码登录示例</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .login-card {
+    width: 420px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 36px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .form-item { margin-bottom: 18px; }
+
+  .form-item label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+
+  .code-row { display: flex; gap: 10px; }
+
+  .code-row input { flex: 1; }
+
+  .form-item input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-item input:focus { border-color: #667eea; }
+
+  .btn-send {
+    width: 120px;
+    height: 42px;
+    border: 1px solid #667eea;
+    background: #fff;
+    color: #667eea;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-send:disabled { border-color: #c0c4cc; color: #c0c4cc; cursor: not-allowed; }
+
+  .btn-login {
+    width: 100%;
+    height: 44px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .btn-login:hover { opacity: .9; }
+
+  #result {
+    margin-top: 14px;
+    font-size: 14px;
+    text-align: center;
+    min-height: 20px;
+    word-break: break-all;
+  }
+
+  #result.ok { color: #67c23a; }
+  #result.fail { color: #f56c6c; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1>短信验证码登录</h1>
+
+  <div class="form-item">
+    <label for="mobile">手机号</label>
+    <input type="tel" id="mobile" placeholder="请输入手机号" maxlength="11" autocomplete="off">
+  </div>
+
+  <div class="form-item">
+    <label for="code">验证码</label>
+    <div class="code-row">
+      <input type="text" id="code" placeholder="6 位数字验证码" maxlength="6" autocomplete="off">
+      <button class="btn-send" id="btnSend">获取验证码</button>
+    </div>
+  </div>
+
+  <button class="btn-login" id="btnLogin">登 录</button>
+
+  <div id="result"></div>
+  <div class="form-item" style="margin-top:14px">
+    <p style="font-size:12px;color:#999;line-height:1.8">
+      示例使用模拟短信服务（LogSmsSender），验证码打印在后端控制台日志中：
+      【模拟短信】向 138****8000 发送验证码：123456。
+    </p>
+  </div>
+</div>
+
+<script>
+  const API_BASE = ''; // 与后端同源部署时无需修改；若跨域部署请改为如 http://localhost:9092
+
+  function showResult(msg, ok) {
+    const resultEl = document.getElementById('result');
+    resultEl.textContent = msg;
+    resultEl.className = ok ? 'ok' : 'fail';
+  }
+
+  // 获取验证码 + 60 秒倒计时
+  document.getElementById('btnSend').addEventListener('click', function () {
+    const mobile = document.getElementById('mobile').value.trim();
+    if (!/^1\d{10}$/.test(mobile)) {
+      showResult('请输入正确的 11 位手机号', false);
+      return;
+    }
+    fetch(API_BASE + '/auth/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobile: mobile })
+    })
+      .then(resp => resp.json())
+      .then(res => {
+        showResult(res.msg, res.code === 0);
+        if (res.code === 0) countdown(this, 60);
+      })
+      .catch(e => showResult('请求失败：' + e.message, false));
+  });
+
+  function countdown(btn, seconds) {
+    btn.disabled = true;
+    const timer = setInterval(() => {
+      btn.textContent = seconds-- + 's 后重发';
+      if (seconds < 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.textContent = '获取验证码';
+      }
+    }, 1000);
+  }
+
+  // 登录
+  document.getElementById('btnLogin').addEventListener('click', function () {
+    const mobile = document.getElementById('mobile').value.trim();
+    const code = document.getElementById('code').value.trim();
+    fetch(API_BASE + '/auth/sms/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobile: mobile, code: code })
+    })
+      .then(resp => resp.json())
+      .then(res => {
+        showResult(res.code === 0 ? res.msg + '，token=' + res.data.token : res.msg, res.code === 0);
+      })
+      .catch(e => showResult('请求失败：' + e.message, false));
+  });
+</script>
+</body>
+</html>
