@@ -23,6 +23,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	// Hutool 工具库：手机号校验（PhoneUtil）、UUID（IdUtil）等
 	implementation("cn.hutool:hutool-core:5.8.47")
+	// 阿里云短信 SDK V2.0（dysmsapi 2017-05-25 模型），sms.provider=aliyun 时使用
+	implementation("com.aliyun:dysmsapi20170525:4.1.1")
+	// sms4j 短信聚合框架：一套 API 对接阿里云/腾讯云/华为云等多厂商，sms.provider=sms4j 时使用
+	implementation("org.dromara.sms4j:sms4j-spring-boot-starter:3.3.5")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

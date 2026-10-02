@@ -1,6 +1,8 @@
 package com.darkmi.springboot.smslogin.service;
 
 import com.darkmi.springboot.smslogin.common.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class SmsCodeService {
+
+    private static final Logger log = LoggerFactory.getLogger(SmsCodeService.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -63,8 +67,14 @@ public class SmsCodeService {
                 now + resendIntervalSeconds * 1000,
                 maxAttempts));
 
-        // 4. 调用短信服务商发送
-        smsSender.send(mobile, code);
+        // 4. 调用短信服务商发送：失败时回滚频控记录，让用户可以立即重试
+        try {
+            smsSender.send(mobile, code);
+        } catch (Exception e) {
+            log.error("短信发送失败 mobile={}：{}", mobile, e.getMessage(), e);
+            cache.remove(mobile);
+            return Result.error("短信发送失败，请稍后重试");
+        }
         return Result.success("验证码已发送，" + expireMinutes + " 分钟内有效");
     }
 
