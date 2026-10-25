@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('个人中心')}"></head>
+<body>
+<div class="layout">
+    <div th:replace="~{fragments :: sidebar('profile')}"></div>
+    <main class="content">
+        <h1>个人中心</h1>
+        <div class="card">
+            <table>
+                <tr><th>用户名</th><td th:text="${user.username}">a</td></tr>
+                <tr><th>昵称</th><td th:text="${user.nickname}">用户A</td></tr>
+                <tr><th>角色</th><td th:text="${roles}">user_admin</td></tr>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

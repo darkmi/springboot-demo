@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### SQLite 数据库文件（springboot-shiro 等模块的本地库） ###
+*.db

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('403')}"></head>
+<body>
+<div class="layout">
+    <div th:replace="~{fragments :: sidebar('none')}"></div>
+    <main class="content">
+        <h1>403</h1>
+        <div class="card">
+            <p>抱歉，您没有访问该页面的权限。</p>
+            <p><a th:href="@{/}">返回个人中心</a></p>
+        </div>
+    </main>
+</div>
+</body>
+</html>

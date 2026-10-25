@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('用户管理')}"></head>
+<body>
+<div class="layout">
+    <div th:replace="~{fragments :: sidebar('users')}"></div>
+    <main class="content">
+        <h1>用户管理</h1>
+        <div class="card">
+            <table>
+                <thead>
+                <tr><th>用户名</th><th>昵称</th><th>角色</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${users}">
+                    <td th:text="${u.username}">a</td>
+                    <td th:text="${u.nickname}">用户A</td>
+                    <td th:text="${u.roles}">user_admin</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

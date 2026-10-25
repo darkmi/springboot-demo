@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>登录 · Security Demo</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body class="login-body">
+<div class="login-box">
+    <h1>Security Demo</h1>
+    <!-- th:action 会让 Thymeleaf 自动追加 CSRF 隐藏域；POST /login 由 Spring Security 处理 -->
+    <form th:action="@{/login}" method="post">
+        <label for="username">用户名</label>
+        <input id="username" name="username" type="text" required autofocus>
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" required>
+        <button type="submit">登 录</button>
+        <p class="error" th:if="${param.error}">用户名或密码错误</p>
+    </form>
+    <p class="tip">演示账号：a / 123456（用户管理）；b / 123456（订单管理）</p>
+</div>
+</body>
+</html>

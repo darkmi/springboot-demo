@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <title th:text="${title} + ' · Security Demo'">Security Demo</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<!-- 侧边栏菜单：菜单项按当前用户权限显隐（标记由 MenuAdvice 注入）；退出登录为 POST 表单（配合 CSRF） -->
+<div th:fragment="sidebar(active)" class="sidebar">
+    <div class="brand">Security Demo</div>
+    <a th:href="@{/}" th:classappend="${active == 'profile'} ? 'active'">个人中心</a>
+    <a th:href="@{/users}" th:if="${canManageUsers}" th:classappend="${active == 'users'} ? 'active'">用户管理</a>
+    <a th:href="@{/orders}" th:if="${canManageOrders}" th:classappend="${active == 'orders'} ? 'active'">订单管理</a>
+    <form th:action="@{/logout}" method="post" class="logout-form">
+        <button type="submit">退出登录</button>
+    </form>
+</div>
+</body>
+</html>
