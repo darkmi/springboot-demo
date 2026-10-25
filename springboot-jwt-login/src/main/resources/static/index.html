@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - JWT 登录认证示例</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .login-card {
+    width: 460px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 36px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .form-item { margin-bottom: 18px; }
+
+  .form-item label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+
+  .form-item input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-item input:focus { border-color: #667eea; }
+
+  .btn-login {
+    width: 100%;
+    height: 44px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .btn-login:hover { opacity: .9; }
+
+  .token-box {
+    display: none;
+    margin-top: 18px;
+    padding: 12px;
+    background: #f7f8fc;
+    border: 1px solid #e8eaf2;
+    border-radius: 6px;
+  }
+
+  .token-box .token-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+
+  .token-box .token-value {
+    font-size: 12px;
+    color: #555;
+    word-break: break-all;
+    line-height: 1.6;
+    max-height: 72px;
+    overflow-y: auto;
+  }
+
+  .action-row { display: none; gap: 10px; margin-top: 14px; }
+
+  .action-row button {
+    flex: 1;
+    height: 38px;
+    border: 1px solid #667eea;
+    background: #fff;
+    color: #667eea;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .action-row button:hover { background: #f0f2fb; }
+
+  .action-row button.danger {
+    border-color: #f56c6c;
+    color: #f56c6c;
+  }
+
+  .action-row button.danger:hover { background: #fef0f0; }
+
+  #result {
+    margin-top: 14px;
+    font-size: 14px;
+    text-align: center;
+    min-height: 20px;
+    word-break: break-all;
+  }
+
+  #result.ok { color: #67c23a; }
+  #result.fail { color: #f56c6c; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1>JWT 登录认证</h1>
+
+  <div class="form-item">
+    <label for="username">用户名</label>
+    <input type="text" id="username" value="admin" autocomplete="off">
+  </div>
+
+  <div class="form-item">
+    <label for="password">密码</label>
+    <input type="password" id="password" value="admin123" autocomplete="off">
+  </div>
+
+  <button class="btn-login" id="btnLogin">登 录</button>
+
+  <div class="token-box" id="tokenBox">
+    <div class="token-label">Token（已保存到 localStorage，后续请求放入 Authorization 头）</div>
+    <div class="token-value" id="tokenValue"></div>
+  </div>
+
+  <div class="action-row" id="actionRow">
+    <button id="btnProfile">访问受保护接口</button>
+    <button id="btnTamper" class="danger">篡改 token 后访问</button>
+    <button id="btnLogout">退出</button>
+  </div>
+
+  <div id="result"></div>
+  <div class="form-item" style="margin-top:14px">
+    <p style="font-size:12px;color:#999;line-height:1.8">
+      示例账号 admin / admin123。登录成功后 token 存入 localStorage，
+      "篡改 token 后访问" 用于演示验签失败返回 401；
+      把后端 jwt.expire-millis 改成 5000 重启，可复现"token 已过期"。
+    </p>
+  </div>
+</div>
+
+<script>
+  const API_BASE = ''; // 与后端同源部署时无需修改；若跨域部署请改为如 http://localhost:9098
+
+  function showResult(msg, ok) {
+    const resultEl = document.getElementById('result');
+    resultEl.textContent = msg;
+    resultEl.className = ok ? 'ok' : 'fail';
+  }
+
+  // 页面加载时恢复已保存的 token
+  const savedToken = localStorage.getItem('token');
+  if (savedToken) {
+    showTokenBox(savedToken);
+    showResult('已登录（localStorage 中存在 token）', true);
+  }
+
+  function showTokenBox(token) {
+    document.getElementById('tokenValue').textContent = token;
+    document.getElementById('tokenBox').style.display = 'block';
+    document.getElementById('actionRow').style.display = 'flex';
+  }
+
+  function hideTokenBox() {
+    document.getElementById('tokenValue').textContent = '';
+    document.getElementById('tokenBox').style.display = 'none';
+    document.getElementById('actionRow').style.display = 'none';
+  }
+
+  // 登录：成功后保存 token
+  document.getElementById('btnLogin').addEventListener('click', function () {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    fetch(API_BASE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password })
+    })
+      .then(resp => resp.json())
+      .then(res => {
+        if (res.code === 0) {
+          localStorage.setItem('token', res.data.token);
+          showTokenBox(res.data.token);
+          showResult(res.msg + '，token 已存入 localStorage', true);
+        } else {
+          showResult(res.msg, false);
+        }
+      })
+      .catch(e => showResult('请求失败：' + e.message, false));
+  });
+
+  // 携带 token 访问受保护接口；401 时清除本地 token（对应前端统一处理）
+  function callProfile(token) {
+    return fetch(API_BASE + '/auth/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(async resp => {
+      const body = await resp.json();
+      if (resp.status === 401) {
+        // token 缺失/过期/非法都走这里：清掉本地 token，提示重新登录
+        localStorage.removeItem('token');
+        hideTokenBox();
+      }
+      return { status: resp.status, body: body };
+    });
+  }
+
+  document.getElementById('btnProfile').addEventListener('click', function () {
+    const token = localStorage.getItem('token');
+    if (!token) { showResult('未登录，请先登录', false); return; }
+    callProfile(token)
+      .then(({ status, body }) => {
+        if (body.code === 0) {
+          showResult('HTTP ' + status + '，访问成功，当前用户：' + body.data.username, true);
+        } else {
+          showResult('HTTP ' + status + '，' + body.msg + '（本地 token 已清除）', false);
+        }
+      })
+      .catch(e => showResult('请求失败：' + e.message, false));
+  });
+
+  // 篡改 token 最后一位字符再访问：验签失败应返回 401 token 非法
+  document.getElementById('btnTamper').addEventListener('click', function () {
+    const token = localStorage.getItem('token');
+    if (!token) { showResult('未登录，请先登录', false); return; }
+    const tampered = token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A');
+    callProfile(tampered)
+      .then(({ status, body }) => {
+        showResult('HTTP ' + status + '，' + body.msg, false);
+      })
+      .catch(e => showResult('请求失败：' + e.message, false));
+  });
+
+  // 退出：仅清除本地 token（JWT 无状态，服务端不感知；彻底作废需黑名单机制）
+  document.getElementById('btnLogout').addEventListener('click', function () {
+    localStorage.removeItem('token');
+    hideTokenBox();
+    showResult('已退出（本地 token 已清除）', true);
+  });
+</script>
+</body>
+</html>
