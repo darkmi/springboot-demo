@@ -26,6 +26,9 @@ dependencies {
 	implementation("com.xingyuv:spring-boot-starter-captcha-plus:2.0.3")
 	// Redis 缓存：生产环境将 aj.captcha.cache-type 切换为 redis 时使用
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	// FakeRedis：进程内内存版 Redis 服务端（jedis-mock），配合 fake-redis profile，
+	// 本机未安装 Redis 的学员也能走通 RedisCaptchaServiceImpl 缓存链路
+	implementation("com.github.fppt:jedis-mock:1.1.19")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

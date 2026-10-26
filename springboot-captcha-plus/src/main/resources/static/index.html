@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>登录 - AJ-Captcha 图形验证码示例（芋道方案）</title>
-<!-- AJ-Captcha 官方前端插件样式 -->
+<title>登录 - captcha-plus 图形验证码示例</title>
+<!-- captcha-plus 官方前端插件样式（verify.js 沿用 AJ-Captcha 实现） -->
 <link rel="stylesheet" href="css/verify.css">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,7 +55,7 @@
 
   .form-item input:focus { border-color: #667eea; }
 
-  .btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
 
   .btn-verify {
     flex: 1;
@@ -70,7 +70,78 @@
 
   .btn-slider { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
   .btn-point  { background: linear-gradient(135deg, #36cfc9 0%, #1890ff 100%); }
+  .btn-text   { background: linear-gradient(135deg, #fa8c16 0%, #f5222d 100%); flex: 1 1 100%; }
   .btn-verify:hover { opacity: .9; }
+
+  /* 图形文字验证码（pictureWord）弹出层：verify.js 不支持该类型，单独实现 */
+  .pw-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+
+  .pw-card {
+    width: 300px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 22px 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+  }
+
+  .pw-title {
+    font-size: 15px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .pw-card img {
+    display: block;
+    margin: 0 auto 12px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+  }
+
+  .pw-card input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    font-size: 15px;
+    letter-spacing: 4px;
+    outline: none;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .pw-card input:focus { border-color: #fa8c16; }
+
+  .pw-msg {
+    min-height: 18px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #f56c6c;
+    text-align: center;
+  }
+
+  .pw-btns { display: flex; gap: 8px; margin-top: 8px; }
+
+  .pw-btns button {
+    flex: 1;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .pw-btns .pw-ok { background: #fa8c16; color: #fff; }
+  .pw-btns .pw-link { background: #f5f5f5; color: #666; }
 
   .captcha-tip {
     margin-top: 14px;
@@ -95,7 +166,7 @@
 </head>
 <body>
 <div class="login-card">
-  <h1>用户登录（AJ-Captcha）</h1>
+  <h1>用户登录（captcha-plus）</h1>
 
   <div class="form-item">
     <label for="username">用户名</label>
@@ -111,19 +182,37 @@
     <!-- 点击后弹出滑动拼图验证（mode: pop，containerId 指向对应按钮） -->
     <button class="btn-verify btn-slider" id="btnSlider">滑动拼图验证登录</button>
     <button class="btn-verify btn-point" id="btnPoint">文字点选验证登录</button>
+    <!-- 图形文字验证码：SPI 扩展类型 pictureWord，verify.js 不支持，单独实现弹层 -->
+    <button class="btn-verify btn-text" id="btnText">图形文字验证登录（SPI）</button>
   </div>
 
   <div id="result"></div>
 
   <div class="captcha-tip">
     后端接口：POST /captcha/get（获取验证码）、/captcha/check（前端核对）、
-    /auth/login（登录 + 服务端二次校验），前端使用 AJ-Captcha 官方 verify.js 插件。
+    /auth/login（登录 + 服务端二次校验）。滑动拼图/文字点选使用 captcha-plus 官方
+    verify.js 插件；图形文字（pictureWord）为 SPI 扩展类型，由本页单独实现弹层。
   </div>
 </div>
 
 <!-- 验证码组件挂载点（pop 模式，由插件控制显示/隐藏） -->
 <div id="sliderPanel"></div>
 <div id="pointPanel"></div>
+
+<!-- 图形文字验证码（pictureWord）弹出层 -->
+<div class="pw-mask" id="pwMask" style="display:none">
+  <div class="pw-card">
+    <div class="pw-title">请输入图中字符（不区分大小写）</div>
+    <img id="pwImg" alt="图形文字验证码">
+    <input type="text" id="pwInput" placeholder="4 位字符" maxlength="4" autocomplete="off">
+    <div class="pw-msg" id="pwMsg"></div>
+    <div class="pw-btns">
+      <button class="pw-link" id="pwRefresh">换一张</button>
+      <button class="pw-link" id="pwClose">取消</button>
+      <button class="pw-ok" id="pwSubmit">验证并登录</button>
+    </div>
+  </div>
+</div>
 
 <script src="js/jquery.min.js"></script>
 <script src="js/crypto-js.js"></script>
@@ -191,6 +280,85 @@
     containerId: 'btnPoint',
     imgSize: { width: '500px', height: '255px' }
   }));
+
+  // ==================== 图形文字验证码（pictureWord，SPI 扩展类型） ====================
+  // verify.js 只支持 blockPuzzle / clickWord，该类型由本页单独实现：
+  // /captcha/get 取图 → 用户输入 → /captcha/check 核对 → 拼 captchaVerification → 登录
+  const pwState = { token: null, secretKey: null };
+
+  function pwShowMsg(msg) {
+    document.getElementById('pwMsg').textContent = msg || '';
+  }
+
+  function pwOpen() {
+    document.getElementById('pwMask').style.display = 'flex';
+    pwGet();
+  }
+
+  function pwClose() {
+    document.getElementById('pwMask').style.display = 'none';
+  }
+
+  // 获取验证码图片（验证码文本只存服务端，不回传前端）
+  function pwGet() {
+    document.getElementById('pwInput').value = '';
+    pwShowMsg('');
+    fetch(API_BASE + '/captcha/get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ captchaType: 'pictureWord', ts: Date.now() })
+    })
+      .then(resp => resp.json())
+      .then(res => {
+        if (res.repData && res.repData.token) {
+          pwState.token = res.repData.token;
+          pwState.secretKey = res.repData.secretKey;
+          document.getElementById('pwImg').src = 'data:image/png;base64,' + res.repData.originalImageBase64;
+          document.getElementById('pwInput').focus();
+        } else {
+          pwShowMsg(res.repMsg || '获取验证码失败');
+        }
+      })
+      .catch(e => pwShowMsg('请求失败：' + e.message));
+  }
+
+  // 核对验证码，通过后拼接二次校验令牌并登录（拼接规则与 verify.js 一致）
+  function pwCheck() {
+    const input = document.getElementById('pwInput').value.trim();
+    if (!input) {
+      pwShowMsg('请输入验证码');
+      return;
+    }
+    fetch(API_BASE + '/captcha/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ captchaType: 'pictureWord', token: pwState.token, pointJson: input, ts: Date.now() })
+    })
+      .then(resp => resp.json())
+      .then(res => {
+        if (res.repData && res.repData.result === true) {
+          const plain = pwState.token + '---' + input;
+          const captchaVerification = pwState.secretKey ? aesEncrypt(plain, pwState.secretKey) : plain;
+          pwClose();
+          doLogin(captchaVerification);
+        } else {
+          // 失败后验证码已失效，先刷新图片（内部会清空提示），再展示失败原因
+          pwGet();
+          pwShowMsg(res.repMsg || '验证失败');
+        }
+      })
+      .catch(e => pwShowMsg('请求失败：' + e.message));
+  }
+
+  $('#btnText').on('click', function () {
+    if (beforeCheck()) pwOpen();
+  });
+  $('#pwRefresh').on('click', pwGet);
+  $('#pwClose').on('click', pwClose);
+  $('#pwSubmit').on('click', pwCheck);
+  $('#pwInput').on('keydown', function (e) {
+    if (e.key === 'Enter') pwCheck();
+  });
 </script>
 </body>
 </html>
