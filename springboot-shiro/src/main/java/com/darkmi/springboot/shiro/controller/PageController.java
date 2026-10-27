@@ -34,7 +34,7 @@ public class PageController {
 	}
 
 	/**
-	 * 用户管理：仅 user_admin 角色（用户 a）可访问，越权时 Shiro 抛 AuthorizationException。
+	 * 用户管理：仅 admin / useradmin 可访问，越权时 Shiro 抛 AuthorizationException。
 	 */
 	@RequiresPermissions("user:list")
 	@GetMapping("/users")
@@ -44,7 +44,7 @@ public class PageController {
 	}
 
 	/**
-	 * 订单管理：仅 order_admin 角色（用户 b）可访问。
+	 * 订单管理：仅 admin / orderadmin 可访问。
 	 */
 	@RequiresPermissions("order:list")
 	@GetMapping("/orders")
